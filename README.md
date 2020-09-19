@@ -1,4 +1,4 @@
-![openweathermap-eng](https://user-images.githubusercontent.com/33804747/50649716-d987f880-0fa8-11e9-9608-93aa8b2857f4.png)
+![nws](https://user-images.githubusercontent.com/6001710/93689060-e5775f00-fa98-11ea-9f9b-fb2ff13a7a37.png)
 
 ## Configuration
 

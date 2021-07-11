@@ -24,8 +24,8 @@ const locale = {
     ]
   },
   en: {
-    tempHi: "Temperature",
-    tempLo: "Temperature night",
+    tempHi: "Temperature high",
+    tempLo: "Temperature low",
     feels_like: "Feels",
     precip: "Precipitation",
     uPress: "inHg",
@@ -101,6 +101,7 @@ const locale = {
 class WeatherCardChart extends Polymer.Element {
 
   static get template() {
+    console.log("get template");
     return Polymer.html `
       <style>
         ha-icon {
@@ -273,6 +274,7 @@ class WeatherCardChart extends Polymer.Element {
       option3Obj: Object,
       mode: String,
       points: Number,
+      datasource: String,
       weatherObj: {
         type: Object,
         observer: 'dataChanged'
@@ -297,7 +299,8 @@ class WeatherCardChart extends Polymer.Element {
       'snowy-rainy': 'hass:weather-snowy-rainy',
       'sunny': 'hass:weather-sunny',
       'windy': 'hass:weather-windy',
-      'windy-variant': 'hass:weather-windy-variant'
+      'windy-variant': 'hass:weather-windy-variant',
+      'exceptional': 'hass:weather-sunny'
     };
     this.cardinalDirectionsIcon = [
       'mdi:arrow-down', 'mdi:arrow-bottom-left', 'mdi:arrow-left',
@@ -309,18 +312,13 @@ class WeatherCardChart extends Polymer.Element {
   setConfig(config) {
     this.config = config;
     this.title = config.title;
-    //this.weatherObj = config.weather;
-    //this.tempObj = config.temp;
-    //this.humidityObj = config.humidity;
-    //this.pressureObj = config.pressure;
-    //this.option1Obj = config.option1;
-    //this.option2Obj = config.option2;
-    //this.option3Obj = config.option3;
     this.mode = config.mode;
+    this.datasource = config.datasource ? "NWS" : "Default";
     this.points = typeof (config.points) === 'number' ? config.points : 9;
     if (!config.weather) {
       throw new Error('Please define "weather" entity in the card config');
     }
+    console.log("setConfig "+config.weather);
   }
 
   set hass(hass) {
@@ -337,13 +335,12 @@ class WeatherCardChart extends Polymer.Element {
     this.option3Obj = this.config.option3 in hass.states ? hass.states[this.config.option3] : null;
     this.forecast = this.weatherObj.attributes.forecast.slice(0, this.points);
     this.windBearing = this.weatherObj.attributes.wind_bearing;
+    console.log("hass "+this.config.weather + " " + this.datasource);
   }
 
   dataChanged(obj) {
+    
     this.drawChart();
-    //this.setProperties({
-    //    _weatherObj: obj
-    //});
   }
 
   roundNumber(number, decimals = 0) {
@@ -416,11 +413,221 @@ class WeatherCardChart extends Polymer.Element {
     } else {
       daynight = 'night';
     }
-    tooltip = title + ' ' + daynight + ': ' + item.detailed_description;
+    if (this.datasource == "NWS") {
+      tooltip = title + ' ' + daynight + ': ' + item.detailed_description;
+    } else {
+    tooltip = title + ': ' + item.condition.charAt(0).toUpperCase() + item.condition.slice(1) + ', ' + this.ll('tempHi') + ' ' + item.temperature + ' ' + this.ll('tempLo') + ' ' + item.templow + ' ' + this.ll('precip') + ' ' + item.precipitation_probability;
+    }
     return tooltip;
   }
 
   drawChart() {
+  console.log("drawchart "+this.config.weather+" "+this.datasource);
+    if (typeof this.weatherObj.attributes === 'undefined') {
+      return [];
+    }
+    if (typeof this.weatherObj.attributes.forecast === 'undefined') {
+      return [];
+    }
+    var data = this.weatherObj.attributes.forecast.slice(0, this.points);
+    var locale = this._hass.selectedLanguage || this._hass.language;
+    var tempUnit = this._hass.config.unit_system.temperature;
+    var lengthUnit = this._hass.config.unit_system.length;
+    var precipUnit = lengthUnit === 'km' ? this.ll('uPrecip') : 'in';
+    var mode = this.mode;
+    var i;
+    var dateTime = [];
+    var tempHigh = [];
+    var tempLow = [];
+    var precip = [];
+    for (i = 0; i < data.length; i++) {
+      var d = data[i];
+    
+      if (this.datasource == "NWS") {
+        dateTime.push(new Date(d.datetime));
+        if (d.daytime) {
+          tempHigh.push({x: new Date(d.datetime), y: d.temperature });
+        } else {
+          tempLow.push({x: new Date(d.datetime), y: d.temperature });
+        }
+      } else {
+        dateTime.push(new Date(d.datetime));
+        tempHigh.push({x: new Date(d.datetime), y: d.temperature });
+        tempLow.push({x: new Date(d.datetime), y: d.templow });
+      }
+      precip.push(d.precipitation_probability);
+    }
+    var style = getComputedStyle(document.body);
+    var textColor = style.getPropertyValue('--primary-text-color');
+    var dividerColor = style.getPropertyValue('--divider-color');
+    const chartOptions = {
+      type: 'bar',
+      data: {
+        labels: dateTime,
+        datasets: [{
+            label: this.ll('tempHi'),
+            type: 'line',
+            data: tempHigh,
+            yAxisID: 'TempAxis',
+            borderWidth: 2.0,
+            lineTension: 0.4,
+            pointRadius: 3.0,
+            pointHitRadius: 5.0,
+            fill: false,
+          },
+          {
+            label: this.ll('tempLo'),
+            type: 'line',
+            data: tempLow,
+            yAxisID: 'TempAxis',
+            borderWidth: 2.0,
+            lineTension: 0.4,
+            pointRadius: 3.0,
+            pointHitRadius: 5.0,
+            fill: false,
+          },
+          {
+            label: this.ll('precip'),
+            type: 'bar',
+            data: precip,
+            yAxisID: 'PrecipAxis',
+          },
+        ]
+      },
+      options: {
+        animation: {
+          duration: 300,
+          easing: 'linear',
+          onComplete: function () {
+            var chartInstance = this.chart,
+              ctx = chartInstance.ctx;
+            ctx.fillStyle = textColor;
+            var fontSize = 10;
+            var fontStyle = 'normal';
+            var fontFamily = 'Roboto';
+            ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            var meta = chartInstance.controller.getDatasetMeta(2);
+            meta.data.forEach(function (bar, index) {
+              var data = (Math.round((chartInstance.data.datasets[2].data[index]) * 10) / 10).toFixed(0);
+              ctx.fillText(data, bar._model.x, bar._model.y - 5);
+            });
+          },
+        },
+        legend: {
+          display: false,
+        },
+        scales: {
+          xAxes: [{
+              type: 'time',
+              distribution: 'series',
+              maxBarThickness: 15,
+              display: false,
+              ticks: {
+                display: false,
+              },
+              gridLines: {
+                display: false,
+              },
+            },
+            {
+              id: 'DateAxis',
+              position: 'bottom',
+              gridLines: {
+                display: true,
+                drawBorder: false,
+                color: dividerColor,
+              },
+              ticks: {
+                display: true,
+                source: 'labels',
+                autoSkip: true,
+                fontColor: textColor,
+                maxRotation: 0,
+                callback: function (value, index, values) {
+                  var data = new Date(value).toLocaleDateString(locale, {
+                    weekday: 'short'
+                  });
+                  var time = new Date(value).toLocaleTimeString(locale, {
+                    hour: 'numeric'
+                  });
+                  if (mode == 'hourly') {
+                    return time;
+                  }
+                  return data;
+                },
+              },
+            }
+          ],
+          yAxes: [{
+              id: 'TempAxis',
+              position: 'left',
+              gridLines: {
+                display: true,
+                drawBorder: false,
+                color: dividerColor,
+                borderDash: [1, 3],
+              },
+              ticks: {
+                display: true,
+                fontColor: textColor,
+              },
+              afterFit: function (scaleInstance) {
+                scaleInstance.width = 28;
+              },
+            },
+            {
+              id: 'PrecipAxis',
+              position: 'right',
+              gridLines: {
+                display: false,
+                drawBorder: false,
+                color: dividerColor,
+              },
+              ticks: {
+                display: false,
+                min: 0,
+                max: 100,
+                //suggestedMax: 20,
+                fontColor: textColor,
+              },
+              afterFit: function (scaleInstance) {
+                scaleInstance.width = 15;
+              },
+            }
+          ],
+        },
+        tooltips: {
+          mode: 'point'
+//          callbacks: {
+//            title: function (items, data) {
+//              const item = items[0];
+//              const date = data.labels[item.index];
+//              return new Date(date).toLocaleDateString(locale, {
+//                month: 'long',
+//                day: 'numeric',
+//                weekday: 'long',
+//                hour: 'numeric',
+//                minute: 'numeric',
+//              });
+//            },
+//            label: function (tooltipItems, data) {
+//              var label = data.datasets[tooltipItems.datasetIndex].label || '';
+//              if (data.datasets[2].label == label) {
+//                return label + ': ' + (tooltipItems.yLabel ?
+//                  (tooltipItems.yLabel + ' %') : ('0 %'));
+//              }
+//              return label + ': ' + tooltipItems.yLabel + ' ' + tempUnit;
+//            },
+//          },
+        },
+      },
+    };
+    this.ChartData = chartOptions;
+  }
+
+  drawChartNWS() {
     if (typeof this.weatherObj.attributes === 'undefined') {
       return [];
     }

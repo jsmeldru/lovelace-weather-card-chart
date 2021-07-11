@@ -1,5 +1,7 @@
 ![nws](https://user-images.githubusercontent.com/6001710/93689060-e5775f00-fa98-11ea-9f9b-fb2ff13a7a37.png)
 
+Note: HA 2021-7-6 updated chartjs to 3.x which had breaking changes.
+
 ## Configuration
 
 Copy `weather-card-chart.js` from this repository into your `config/www` directory first.
@@ -35,6 +37,7 @@ Then you can add the card to the view:
 | option1    | Yes      | Entity_id of the optional sensor.                                                                  |
 | option2    | Yes      | Entity_id of the optional sensor.                                                                  |
 | option3    | Yes      | Entity_id of the optional sensor.                                                                  |
+| datasource | Yes      | Set to NWS to support the NWS integration. NWS has a none standard data structure.  Omit for others|
 
 feels_like
 humidity: 

@@ -1,6 +1,6 @@
-![nws](https://user-images.githubusercontent.com/6001710/93689060-e5775f00-fa98-11ea-9f9b-fb2ff13a7a37.png)
-
 Note: HA 2021-7-6 updated chartjs to 3.x which had breaking changes.
+
+![nws](https://github.com/fancygaphtrn/lovelace-weather-card-chart/blob/master/Climacell.PNG)
 
 ## Configuration
 

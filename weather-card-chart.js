@@ -186,67 +186,7 @@ class WeatherCardChart extends Polymer.Element {
         }    
       </style>
       <ha-card header="[[title]]">
-        <div class="card">
-          <div class="main">
-            <ha-icon icon="[[getWeatherIcon(weatherObj.state)]]"></ha-icon>
-            <template is="dom-if" if="[[tempObj]]">
-              <div on-click="_tempAttr">[[roundNumber(tempObj.state)]]<sup>[[tempObj.attributes.unit_of_measurement]]</sup>
-              <template is="dom-if" if="[[feels_likeObj]]">
-                <span class="feels_like" on-click="_feels_likeAttr">[[ll('feels_like')]]: [[roundNumber(feels_likeObj.state)]][[feels_likeObj.attributes.unit_of_measurement]]</span>
-              </template>
-            </div>
-            </template>
-            <template is="dom-if" if="[[!tempObj]]">
-              <div on-click="_weatherAttr">[[roundNumber(weatherObj.attributes.temperature)]]<sup>[[getUnit('temperature')]]</sup>
-              <template is="dom-if" if="[[feels_likeObj]]">
-                <span class="feels_like" on-click="_feels_likeAttr"><br />[[ll('feels_like')]]:[[roundNumber(feels_likeObj.state)]]<sup>[[feels_likeObj.attributes.unit_of_measurement]]</sup></span>
-              </template>
-            </div>
-            </template>
-            <div class="summary" on-click="_weatherAttr">[[getSummary(weatherObj)]]</div>
-            </template>
-          </div>
-          <div class="attributes" on-click="_weatherAttr">
-            <div>
-              <ha-icon icon="hass:water-percent"></ha-icon>
-              <template is="dom-if" if="[[humidityObj]]">
-                <span on-click="_humidityAttr">[[roundNumber(humidityObj.state)]] [[humidityObj.attributes.unit_of_measurement]]</span><br>
-              </template>
-              <template is="dom-if" if="[[!humidityObj]]">
-                [[roundNumber(weatherObj.attributes.humidity)]] %<br>
-              </template>
-              <ha-icon icon="hass:gauge"></ha-icon>
-              <template is="dom-if" if="[[pressureObj]]">
-                <span on-click="_pressureAttr">[[roundNumber(pressureObj.state,2)]] [[pressureObj.attributes.unit_of_measurement]]</span>
-              </template>
-              <template is="dom-if" if="[[!pressureObj]]">
-                [[roundNumber(weatherObj.attributes.pressure,2)]] [[ll('uPress')]]
-              </template>
-              <template is="dom-if" if="[[option1Obj]]">
-                <br><span on-click="_option1Attr">[[option1Obj.attributes.friendly_name]] [[option1Obj.state]]</span> [[option1Obj.attributes.unit_of_measurement]]
-              </template>
-            </div>
-            <div>
-              <template is="dom-if" if="[[sunObj]]">
-                <ha-icon icon="mdi:weather-sunset-up"></ha-icon>
-                [[computeTime(sunObj.attributes.next_rising)]]<br>
-                <ha-icon icon="mdi:weather-sunset-down"></ha-icon>
-                [[computeTime(sunObj.attributes.next_setting)]]
-              </template>
-              <template is="dom-if" if="[[option2Obj]]">
-                <br><span on-click="_option2Attr">[[option2Obj.attributes.friendly_name]] [[option2Obj.state]] [[option2Obj.attributes.unit_of_measurement]]</span>
-              </template>
-            </div>
-            <div>
-              <ha-icon icon="[[getWindDirIcon(windBearing)]]"></ha-icon>
-              [[getWindDir(windBearing)]]<br>
-              <ha-icon icon="hass:weather-windy"></ha-icon>
-              [[computeWind(weatherObj.attributes.wind_speed)]] [[ll('uSpeed')]]
-              <template is="dom-if" if="[[option3Obj]]">
-                <br><span on-click="_option3Attr">[[option3Obj.attributes.friendly_name]] [[option3Obj.state]]</span> [[option3Obj.attributes.unit_of_measurement]]
-              </template>
-            </div>
-          </div>
+        <div class="card">            
           <ha-chart-base hass="[[_hass]]" chart-type="line" data="[[ChartData]]" options="[[ChartOptions]]"></ha-chart-base>
           <div class="conditions">
             <template is="dom-repeat" items="[[forecast]]">
